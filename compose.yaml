@@ -6,8 +6,8 @@ services:
     gpus: all
     ipc: host
     environment:
-      ASR_GPU_MEMORY: ${ASR_GPU_MEMORY:-0.25}
-      LLM_GPU_MEMORY: ${LLM_GPU_MEMORY:-0.30}
+      ASR_GPU_MEMORY: ${ASR_GPU_MEMORY:-0.30}
+      LLM_GPU_MEMORY: ${LLM_GPU_MEMORY:-0.55}
       TTS_GPU_MEMORY: ${TTS_GPU_MEMORY:-0.25}
       ASR_MAX_MODEL_LEN: ${ASR_MAX_MODEL_LEN:-4096}
       LLM_MAX_MODEL_LEN: ${LLM_MAX_MODEL_LEN:-4096}
