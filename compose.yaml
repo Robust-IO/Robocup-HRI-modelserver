@@ -1,0 +1,25 @@
+services:
+  models:
+    build: .
+    image: robocup-model-server:local
+    init: true
+    gpus: all
+    ipc: host
+    environment:
+      ASR_GPU_MEMORY: ${ASR_GPU_MEMORY:-0.25}
+      LLM_GPU_MEMORY: ${LLM_GPU_MEMORY:-0.30}
+      TTS_GPU_MEMORY: ${TTS_GPU_MEMORY:-0.25}
+      ASR_MAX_MODEL_LEN: ${ASR_MAX_MODEL_LEN:-4096}
+      LLM_MAX_MODEL_LEN: ${LLM_MAX_MODEL_LEN:-4096}
+    volumes:
+      - ${MODEL_DIR:-./models}:/models:ro
+    ports:
+      - "${ASR_PORT:-8001}:8001"
+      - "${LLM_PORT:-8002}:8002"
+      - "${TTS_PORT:-8003}:8003"
+    healthcheck:
+      test: ["CMD", "python3", "/app/scripts/health.py"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10m
+      retries: 3
