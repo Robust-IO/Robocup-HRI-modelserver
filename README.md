@@ -6,13 +6,13 @@
 | --- | --- | --- | --- |
 | ASR | Qwen3-ASR-0.6B，BF16 | 8001 | 音频转文字 |
 | LLM | MiniCPM5-2B 官方 4-bit | 8002 | 文本对话 |
-| TTS | Qwen3-TTS-12Hz-0.6B-Base，BF16 | 8003 | 根据文本和参考音频生成语音 |
+| TTS | Kokoro-82M-v1.1-zh，CPU | 8003 | 固定音色的中英文语音合成 |
 
-服务基于 `vllm/vllm-omni:v0.32.0`，依次初始化后同时常驻。接口直接使用上游 HTTP API；本仓库尚未实现 ROS 适配层或端到端对话。模型权重不进入 Git 和 Docker 镜像。
+服务基于 `vllm/vllm-omni:v0.32.0`，依次初始化后同时常驻。ASR 和 LLM 使用上游 HTTP API，TTS 提供精简的兼容接口；本仓库尚未实现 ROS 适配层或端到端对话。模型权重不进入 Git 和 Docker 镜像。
 
 ## 运行环境
 
-基站需要 NVIDIA GPU、支持 BF16 的驱动环境、Docker、Docker Compose 插件和已配置的 NVIDIA Container Toolkit。首次构建和下载模型需要网络及足够磁盘空间。12 GiB RTX 4080 上曾验证三个服务常驻及短请求；其他 GPU、长音频和长期稳定性需要在目标机器上验证。
+基站需要 NVIDIA GPU、支持 BF16 的驱动环境、Docker、Docker Compose 插件和已配置的 NVIDIA Container Toolkit。首次构建和下载模型需要网络及足够磁盘空间。此前 GPU TTS 配置在 12 GiB RTX 4080 上做过短请求检查；新的 CPU TTS 配置尚需实机验证。
 
 在项目根目录运行宿主机检查：
 
@@ -44,7 +44,7 @@ docker run --rm --gpus all --entrypoint python3 robocup-model-server:local \
    ./scripts/download_models.sh
    ```
 
-   下载脚本使用刚构建的镜像，默认将模型写入项目的 `./models`。网络中断后可重新运行脚本；运行时容器以只读方式挂载模型目录并使用离线模式。
+   下载脚本使用刚构建的镜像，默认将模型写入项目的 `./models`。网络中断后可重新运行脚本；运行时容器以只读方式挂载模型目录并使用离线模式。旧的 `models/tts` 不会自动删除。
 
    如果在 `.env` 中把 `MODEL_DIR` 改成例如 `/data/models`，下载时也必须显式指定相同目录：
 
@@ -53,6 +53,8 @@ docker run --rm --gpus all --entrypoint python3 robocup-model-server:local \
    ```
 
    下载脚本不会自动读取 `.env`。`models/llm-gptq` 保存官方 4-bit 权重；`models/llm` 保存与当前部署一致的原模型 tokenizer 和配置，不包含 BF16 权重。
+
+   Kokoro 使用 sherpa-onnx 维护者提供的 ONNX 转换模型，固定版本下载到 `models/tts-kokoro-onnx`。
 
 3. 启动容器并查看日志：
 
@@ -132,42 +134,23 @@ curl -sS -w '\nHTTP %{http_code}\n' \
 
 ### 文字转语音
 
-当前 TTS Base 使用参考音频提取说话人特征。将客户端本地的 `reference.mp3` 放在当前目录，使用 Python 3 发送请求并保存 `output.mp3`：
+TTS 使用固定声音，无需参考音频。客户端可直接请求 WAV：
 
 ```bash
-python3 - <<'PY'
-import base64
-import json
-import urllib.request
-from pathlib import Path
-
-reference = base64.b64encode(Path('reference.mp3').read_bytes()).decode('ascii')
-payload = {
-    'model': 'qwen3-tts',
-    'input': '你好，欢迎来到机器人比赛。',
-    'task_type': 'Base',
-    'language': 'Chinese',
-    'response_format': 'mp3',
-    'ref_audio': 'data:audio/mpeg;base64,' + reference,
-    'x_vector_only_mode': True,
-}
-request = urllib.request.Request(
-    'http://192.168.3.9:8003/v1/audio/speech',
-    data=json.dumps(payload, ensure_ascii=False).encode('utf-8'),
-    headers={'Content-Type': 'application/json'},
-)
-with urllib.request.urlopen(request, timeout=120) as response:
-    Path('output.mp3').write_bytes(response.read())
-print('已生成 output.mp3')
-PY
+curl -f http://192.168.3.9:8003/v1/audio/speech \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"kokoro-tts","input":"你好，欢迎来到机器人比赛。","response_format":"wav"}' \
+  -o output.wav
 ```
 
-参考音频建议使用清晰的单人语音。也可使用 WAV 参考音频：将文件名替换为 `reference.wav`，并将数据前缀改为 `data:audio/wav;base64,`。输出格式由 `response_format` 指定；实测短英文样本支持 WAV 和 MP3，中文真实参考音频的效果仍需试听。
+将 `response_format` 改为 `mp3` 并将输出文件改为 `output.mp3` 可请求 MP3。可选 `speed` 范围为 0.5 至 2.0；文本最多 500 字符。旧的 `qwen3-tts`、`melo-tts`、`ref_audio`、`task_type` 和音色克隆参数不适用，新接口会返回错误，不会忽略这些参数。
+
+纯英文使用英文预设音色；含中文文本使用中文预设音色，均由 sherpa-onnx 处理文本。中英混读、实际音质和速度需在目标机验证。
 
 ## 配置与限制
 
 - `.env` 控制模型目录、宿主机端口、显存预算及 ASR/LLM 最大序列长度；默认端口为 8001、8002、8003。
-- 当前 LLM 使用官方 `MiniCPM5-2B-GPTQ` 4-bit 权重；其配置声明 AWQ 格式，不使用 CPU 权重卸载。ASR、LLM 和 TTS talker 默认最大序列长度均为 4096 tokens，具体缓存及限制见[部署指南](docs/deployment.md)。
+- 当前 LLM 使用官方 `MiniCPM5-2B-GPTQ` 4-bit 权重；其配置声明 AWQ 格式，不使用 CPU 权重卸载。ASR 和 LLM 默认最大序列长度均为 4096 tokens；CPU TTS 不使用 vLLM 的 KV cache，具体缓存及限制见[部署指南](docs/deployment.md)。
 - 当前配置针对低显存和单请求场景；建议客户端依次调用模型。健康检查、短请求通过不代表长音频或长期运行已验证。
 - 默认端口监听所有宿主机网卡，接口可在未认证的情况下访问；请只在可信网络中开放，并按需通过防火墙限制来源。
 - 若客户端无法连接，检查基站 IP、局域网客户端隔离和 TCP 端口访问规则。模型输出用于机器人动作前，业务侧仍需校验。

@@ -1,6 +1,6 @@
 # 部署与调试
 
-基础镜像为 `vllm/vllm-omni:v0.32.0`；三个模型固定 revision 见 `scripts/download_models.sh`。4-bit 配置需要在目标 GPU 上验证真实推理和显存余量。
+基础镜像为 `vllm/vllm-omni:v0.32.0`；ASR、LLM 和 tokenizer 固定 revision，Kokoro 使用 sherpa-onnx 维护者提供的固定版本 ONNX 模型，地址见 `scripts/download_models.sh`。4-bit 配置需要在目标 GPU 上验证真实推理和显存余量。
 
 ## GPU 和 BF16
 
@@ -14,13 +14,9 @@ docker run --rm --gpus all --entrypoint python3 robocup-model-server:local -c 'i
 
 服务按 ASR、LLM、TTS 顺序启动，每个服务通过健康检查后才启动下一个；单个服务最多等待 10 分钟。串行初始化可避免各服务同时进行显存探测，但不能保证显存足够。修改启动脚本后需重新构建镜像：`docker compose up -d --build`。
 
-低显存配置将 ASR 和 LLM 设为 eager 模式及单请求并发；LLM 使用官方 `MiniCPM5-2B-GPTQ` 4-bit 权重及原模型 tokenizer，不使用 CPU 权重卸载。该模型当前配置声明 AWQ 格式。LLM 最大上下文为 4096 tokens，KV cache 固定为 256 MiB；TTS talker 为 4096 tokens、512 MiB KV cache，两个阶段的并发上限为 1。
+低显存配置将 ASR 和 LLM 设为 eager 模式及单请求并发；LLM 使用官方 `MiniCPM5-2B-GPTQ` 4-bit 权重及原模型 tokenizer，不使用 CPU 权重卸载。该模型当前配置声明 AWQ 格式。LLM 最大上下文为 4096 tokens，KV cache 固定为 256 MiB。ASR 最大长度为 4096，使用显存比例自动确定 KV cache。
 
-官方 4-bit 版本在单模型小样本数学检查中得到 12/12 个正确数学结果，尚未完成比赛指令、结构化输出和长时间运行评测。
-
-ASR 默认最大序列长度为 4096，使用 0.30 显存比例自动确定 KV cache。手动 KV cache 值跳过自动显存探测，不保证其他 GPU 或负载条件下有足够空间。提高长度上限时要重新验证缓存容量和显存；长度包含输入和输出 token，不能直接换算为固定音频秒数。
-
-TTS Code2Wav 阶段使用 eager 模式，以减少 CUDA graph 的显存占用；会影响启动及推理性能，应以真实语音工作负载测量。
+TTS 改为 Kokoro-82M-v1.1-zh，CPU 推理，模型目录为 `models/tts-kokoro-onnx`，无需参考音频。接口提供 `GET /health`、`GET /v1/models` 和 `POST /v1/audio/speech`，请求示例见 README。旧的 `models/tts` 和 Qwen 配置文件不再使用。新模型的音质、延迟、内存与显存尚需实机验证。
 
 ## 调用示例
 
@@ -32,7 +28,7 @@ curl -f http://localhost:8001/v1/audio/transcriptions -F model=qwen3-asr -F file
 curl -f http://localhost:8002/v1/chat/completions -H 'Content-Type: application/json' -d '{"model":"minicpm5","messages":[{"role":"user","content":"你好"}],"max_tokens":128}'
 ```
 
-TTS Base 使用参考音频克隆声音。参考音频及文本的请求字段应遵循所选版本的 [vLLM-Omni Speech API](https://docs.vllm.ai/projects/vllm-omni/en/stable/serving/speech_api/)，并在远端验证该版本支持 0.6B Base。ASR 的实时接口与普通文件转写是不同能力，远端需单独验证；本仓库尚未实现 ROS 适配层或端到端对话。
+TTS 使用固定音色，不支持参考音频克隆。ASR 的实时接口与普通文件转写是不同能力，远端需单独验证；本仓库尚未实现 ROS 适配层或端到端对话。
 
 ## 离线迁移
 

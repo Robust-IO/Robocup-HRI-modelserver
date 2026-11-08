@@ -31,8 +31,11 @@ class StartupTest(unittest.TestCase):
             mock = Path(tmp) / 'vllm'
             mock.write_text(MOCK)
             mock.chmod(0o755)
+            python = Path(tmp) / 'python3'
+            python.write_text('#!/bin/sh\nif [ "$1" = /app/scripts/tts_server.py ]; then exec "$MOCK_VLLM" serve --port 8003; fi\nexec /usr/bin/python3 "$@"\n')
+            python.chmod(0o755)
             log = Path(tmp) / 'started'
-            env = dict(os.environ, PATH=tmp + os.pathsep + os.environ['PATH'], START_LOG=str(log), FAIL_PORT='8002')
+            env = dict(os.environ, PATH=tmp + os.pathsep + os.environ['PATH'], START_LOG=str(log), FAIL_PORT='8002', MOCK_VLLM=str(mock))
             result = subprocess.run(['bash', str(ENTRYPOINT)], env=env, capture_output=True, text=True, timeout=15)
             self.assertNotEqual(result.returncode, 0)
             self.assertEqual(log.read_text().splitlines(), ['8001', 'ready 8001', '8002'])
@@ -43,8 +46,11 @@ class StartupTest(unittest.TestCase):
             mock = Path(tmp) / 'vllm'
             mock.write_text(MOCK)
             mock.chmod(0o755)
+            python = Path(tmp) / 'python3'
+            python.write_text('#!/bin/sh\nif [ "$1" = /app/scripts/tts_server.py ]; then exec "$MOCK_VLLM" serve --port 8003; fi\nexec /usr/bin/python3 "$@"\n')
+            python.chmod(0o755)
             log = Path(tmp) / 'started'
-            env = dict(os.environ, PATH=tmp + os.pathsep + os.environ['PATH'], START_LOG=str(log))
+            env = dict(os.environ, PATH=tmp + os.pathsep + os.environ['PATH'], START_LOG=str(log), MOCK_VLLM=str(mock))
             process = subprocess.Popen(['bash', str(ENTRYPOINT)], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             try:
                 deadline = time.monotonic() + 15
