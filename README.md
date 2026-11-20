@@ -59,7 +59,7 @@ docker run --rm --gpus all --entrypoint python3 robocup-model-server:local \
 3. 启动容器并查看日志：
 
    ```bash
-   docker compose up -d
+   docker compose up -d --no-build
    docker compose logs -f
    ```
 
@@ -70,7 +70,7 @@ docker run --rm --gpus all --entrypoint python3 robocup-model-server:local \
    nvidia-smi
    ```
 
-   `healthy` 表示三个服务的健康检查通过。修改启动脚本或镜像文件后，使用 `docker compose up -d --build` 重新构建并启动；结束运行使用 `docker compose down`。
+   `healthy` 表示三个服务的健康检查通过。修改启动脚本或镜像文件后，先执行 `docker compose build models`，再执行 `docker compose up -d --no-build models`；结束运行使用 `docker compose down`。
 
 4.关闭容器
  ```bash
@@ -79,13 +79,15 @@ docker run --rm --gpus all --entrypoint python3 robocup-model-server:local \
 
 ## 比赛基站启动（ROS 2 Domain 42）
 
-基站按上节准备好模型权重和 Docker 环境后，在公开仓库根目录执行一条命令：
+在基站仓库根目录执行。首次部署先按上节准备模型权重和 Docker 环境。
 
-```bash
-git pull --ff-only origin main && ./scripts/start_ros.sh
-```
+| 操作 | 命令 |
+| --- | --- |
+| 首次部署或镜像内容更新后，构建模型和 ROS 镜像 | `./scripts/build_ros.sh` |
+| 日常启动两个容器并等待就绪 | `./scripts/start_ros.sh` |
+| 日常停止两个容器，保留容器和镜像 | `./scripts/stop_ros.sh` |
 
-脚本启动现有模型服务，等待模型健康，构建并启动 Humble 容器，然后检查三个模型节点的汇总就绪状态。出现 `ROS Domain 42 ready` 后即可关闭终端。构建所需的六个 ROS 包随本仓库提供，接口与比赛源码 `4456355` 对齐。基站无需私有 Git 账号，也无需在宿主机安装 ROS。
+启动使用本机已有镜像。脚本先等待模型健康，再启动 ROS 并检查三个节点的汇总状态。出现 `ROS Domain 42 ready` 后即可关闭终端。六个 ROS 包随本仓库提供，接口与比赛源码 `4456355` 对齐。
 
 ROS 容器使用宿主机网络与默认 Fast DDS，按本仓库配置的 ASR_PORT、LLM_PORT、TTS_PORT 访问基站回环地址。Orin 和基站接入允许 DDS 组播、单播互通的局域网。在 Orin 已加载 Humble 和项目 overlay 的容器终端执行：
 

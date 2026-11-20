@@ -3,8 +3,8 @@ set -eo pipefail
 cd "$(dirname "$0")/.."
 
 compose=(docker compose -f compose.yaml -f compose.ros.yaml)
-"${compose[@]}" up -d --wait models
-"${compose[@]}" up -d --build ros
+"${compose[@]}" up -d --no-build --pull never --wait models
+"${compose[@]}" up -d --no-build --pull never ros
 if ! "${compose[@]}" exec -T ros bash -c '
   source /opt/robocup/install/setup.bash
   timeout 90 ros2 topic echo --once --filter "m.service_name == \"base_station_diagnostics\" and m.ready" \
