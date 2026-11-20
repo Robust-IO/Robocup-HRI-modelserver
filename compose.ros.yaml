@@ -1,0 +1,16 @@
+services:
+  ros:
+    build:
+      context: ./ros
+      additional_contexts:
+        ai: ${ROBOT_AI_SRC:-../NankaiRoboCup2026/src/ai}
+    network_mode: host
+    ipc: host
+    restart: unless-stopped
+    environment:
+      ROS_DOMAIN_ID: "42"
+      ROS_LOCALHOST_ONLY: "0"
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      ASR_PORT: ${ASR_PORT:-8001}
+      LLM_PORT: ${LLM_PORT:-8002}
+      TTS_PORT: ${TTS_PORT:-8003}

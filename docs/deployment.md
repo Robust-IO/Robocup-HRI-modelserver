@@ -28,7 +28,7 @@ curl -f http://localhost:8001/v1/audio/transcriptions -F model=qwen3-asr -F file
 curl -f http://localhost:8002/v1/chat/completions -H 'Content-Type: application/json' -d '{"model":"minicpm5","messages":[{"role":"user","content":"你好"}],"max_tokens":128}'
 ```
 
-TTS 使用固定音色，不支持参考音频克隆。ASR 的实时接口与普通文件转写是不同能力，远端需单独验证；本仓库尚未实现 ROS 适配层或端到端对话。
+TTS 使用固定音色，不支持参考音频克隆。ASR 的实时接口与普通文件转写是不同能力，远端需单独验证；比赛 ROS Action 的启动和跨机发现检查见 [基站 README](../README.md)。
 
 ## 离线迁移
 

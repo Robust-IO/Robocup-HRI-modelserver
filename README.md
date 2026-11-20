@@ -8,7 +8,7 @@
 | LLM | MiniCPM5-2B 官方 4-bit | 8002 | 文本对话 |
 | TTS | Kokoro-82M-v1.1-zh，CPU | 8003 | 固定音色的中英文语音合成 |
 
-服务基于 `vllm/vllm-omni:v0.32.0`，依次初始化后同时常驻。ASR 和 LLM 使用上游 HTTP API，TTS 提供精简的兼容接口；本仓库尚未实现 ROS 适配层或端到端对话。模型权重不进入 Git 和 Docker 镜像。
+服务基于 `vllm/vllm-omni:v0.32.0`，依次初始化后同时常驻。ASR 和 LLM 使用上游 HTTP API，TTS 提供精简的兼容接口；比赛时可启动独立 ROS 2 容器向机器人提供模型 Action。模型权重不进入 Git 和 Docker 镜像。
 
 ## 运行环境
 
@@ -76,6 +76,27 @@ docker run --rm --gpus all --entrypoint python3 robocup-model-server:local \
  ```bash
  docker compose stop
  ```
+
+## 比赛基站启动（ROS 2 Domain 42）
+
+在 Linux 基站上先按上节启动三个模型。已有模型容器正在提供服务时，直接在本仓库根目录执行：
+
+```bash
+./scripts/start_ros.sh
+docker compose -f compose.yaml -f compose.ros.yaml logs -f ros
+```
+
+首次启动需 Docker Compose 2.17+、BuildKit，以及本机 Git 对比赛主仓库的读取权限。脚本取出与比赛接口匹配的固定源码，构建 Humble 镜像并后台启动 ROS 节点。日志出现 `llm: ready`、`tts: ready`、`asr_wav: ready` 后可按 Ctrl+C 退出日志。再次运行脚本会复用源码及构建缓存。如果基站已有与 Orin 相同版本的比赛源码，可以指定 `ROBOT_AI_SRC=/绝对路径/NankaiRoboCup2026/src/ai ./scripts/start_ros.sh`。
+
+ROS 容器使用宿主机网络与默认 Fast DDS，按本仓库配置的 ASR_PORT、LLM_PORT、TTS_PORT 访问基站回环地址。Orin 和基站接入允许 DDS 组播、单播互通的局域网。在 Orin 已加载 Humble 和项目 overlay 的容器终端执行：
+
+```bash
+export ROS_DOMAIN_ID=42 ROS_LOCALHOST_ONLY=0 RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+ros2 node list --no-daemon --spin-time 8
+for name in chat speak transcribe_wav; do ros2 action info "/robot1/ai/$name"; done
+```
+
+每个 Action 应显示一个服务端，依次为 `/robot1/llm_node`、`/robot1/tts_node`、`/robot1/transcribe_wav_node`。Speak 的实际播放还需要 Orin 的扬声器节点。停止基站 ROS 节点使用 `docker compose -f compose.yaml -f compose.ros.yaml stop ros`。
 
 ## 局域网调用
 
