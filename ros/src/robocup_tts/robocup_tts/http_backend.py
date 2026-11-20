@@ -16,6 +16,7 @@ class HttpTtsBackend:
         self.client = ModelHttp(config['base_url'], config['request_timeout_sec'])
         self.model = config['http_model']
         if self.model == 'kokoro-tts':
+            self.speed = config['speed']
             return
         reference = Path(config['reference_audio']).expanduser()
         if not reference.is_file() or reference.suffix.lower() not in ('.wav', '.mp3'):
@@ -27,6 +28,7 @@ class HttpTtsBackend:
         names = {'zh': 'Chinese', 'en': 'English', '': 'Chinese'}
         payload = {'model': self.model, 'input': text, 'response_format': 'wav'}
         if self.model == 'kokoro-tts':
+            payload['speed'] = self.speed
             if voice:
                 payload['voice'] = voice
         else:

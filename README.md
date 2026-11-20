@@ -89,6 +89,8 @@ docker run --rm --gpus all --entrypoint python3 robocup-model-server:local \
 
 启动使用本机已有镜像。脚本先等待模型健康，再启动 ROS 并检查三个节点的汇总状态。出现 `ROS Domain 42 ready` 后即可关闭终端。六个 ROS 包随本仓库提供，接口与比赛源码 `4456355` 对齐。
 
+比赛播报通过 `/robot1/ai/speak` 调用 Kokoro，每次合成使用 `ros/start.sh` 配置的 `tts.speed`，默认值为 `0.7`。
+
 ROS 容器使用宿主机网络与默认 Fast DDS，按本仓库配置的 ASR_PORT、LLM_PORT、TTS_PORT 访问基站回环地址。Orin 和基站接入允许 DDS 组播、单播互通的局域网。在 Orin 已加载 Humble 和项目 overlay 的容器终端执行：
 
 ```bash

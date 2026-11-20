@@ -19,7 +19,7 @@ class TtsNode(AiNode):
             'device': 'cpu', 'dtype': 'float32', 'attention_implementation': 'sdpa',
             'reference_audio': '', 'reference_text': '', 'x_vector_only_mode': False,
             'python_executable': '', 'worker_start_timeout_sec': 120.0,
-            'request_timeout_sec': 60.0}.items()}
+            'request_timeout_sec': 60.0, 'speed': 1.0}.items()}
         base_url = self.param('tts.base_url', '')
         location = base_url if chosen == 'http' else path
         config.update(model_path=path, allow_real_backends=allow, base_url=base_url,
