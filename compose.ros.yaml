@@ -1,9 +1,6 @@
 services:
   ros:
-    build:
-      context: ./ros
-      additional_contexts:
-        ai: ${ROBOT_AI_SRC:-../NankaiRoboCup2026/src/ai}
+    build: ./ros
     network_mode: host
     ipc: host
     restart: unless-stopped

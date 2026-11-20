@@ -1,21 +1,16 @@
 #!/usr/bin/env bash
-# Use the same ROS Action definitions and providers as the competition robot.
-set -euo pipefail
+set -eo pipefail
 cd "$(dirname "$0")/.."
 
-if [[ -z "${ROBOT_AI_SRC:-}" ]]; then
-  revision=4456355aa480d45d39731016b661f38a2aca214f
-  checkout=".ros-source/$revision"
-  if [[ ! -d "$checkout/.git" ]]; then
-    git init -q "$checkout"
-    git -C "$checkout" remote add origin https://github.com/Limoncello-Zoey/NankaiRoboCup2026.git
-  fi
-  if ! git -C "$checkout" cat-file -e "$revision^{commit}" 2>/dev/null; then
-    git -C "$checkout" fetch --depth=1 --filter=blob:none origin "$revision"
-  fi
-  git -C "$checkout" sparse-checkout set src/ai
-  git -C "$checkout" checkout -q --detach "$revision"
-  export ROBOT_AI_SRC="$PWD/$checkout/src/ai"
+compose=(docker compose -f compose.yaml -f compose.ros.yaml)
+"${compose[@]}" up -d --wait models
+"${compose[@]}" up -d --build ros
+if ! "${compose[@]}" exec -T ros bash -c '
+  source /opt/robocup/install/setup.bash
+  timeout 90 ros2 topic echo --once --filter "m.service_name == \"base_station_diagnostics\" and m.ready" \
+    /robot1/ai/status robocup_interfaces/msg/AiServiceStatus
+'; then
+  "${compose[@]}" logs --tail=60 ros
+  exit 1
 fi
-
-docker compose -f compose.yaml -f compose.ros.yaml up -d --build --no-deps ros
+echo 'ROS Domain 42 ready: /robot1/ai/chat, /robot1/ai/speak, /robot1/ai/transcribe_wav'

@@ -1,0 +1,9 @@
+string request_id
+string protocol_version
+uint8[] wav
+---
+bool success
+string text
+uint16 error_code
+string error_message
+---

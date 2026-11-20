@@ -1,0 +1,11 @@
+string service_name
+string node_name
+string state
+bool ready
+string package_version
+string protocol_version
+string release_id
+string git_commit
+string backend
+string model
+string message

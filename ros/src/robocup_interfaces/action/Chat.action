@@ -1,0 +1,14 @@
+string request_id
+string session_id
+string user_text
+bool reset_session
+string protocol_version
+---
+bool success
+string response_text
+string structured_result_json
+uint16 error_code
+string error_message
+---
+string text_delta
+string accumulated_text

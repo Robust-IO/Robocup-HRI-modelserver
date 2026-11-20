@@ -1,0 +1,19 @@
+/**:
+  ros__parameters:
+    llm.backend: mock
+    llm.base_url: ''
+    llm.model: ''
+    llm.temperature: 0.2
+    llm.num_ctx: 4096
+    llm.connect_timeout_sec: 2.0
+    llm.first_token_timeout_sec: 10.0
+    llm.total_timeout_sec: 60.0
+    llm.keep_alive: 10m
+    llm.max_output_chars: 4096
+    llm.max_output_tokens: 512
+    llm.max_sessions: 16
+    llm.max_history_messages: 20
+    llm.structured_output: false
+    llm.think: false
+    llm.suppress_thinking: false
+    llm.mock_text: '收到，我会等待任务状态机确认。'

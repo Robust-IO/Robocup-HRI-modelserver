@@ -1,0 +1,25 @@
+/**:
+  ros__parameters:
+    tts.backend: mock
+    tts.base_url: ''
+    tts.http_model: qwen3-tts
+    tts.model_path: ''
+    tts.mode: CustomVoice
+    tts.language: Chinese
+    tts.speaker: ''
+    tts.instruct: ''
+    tts.device: cpu
+    tts.dtype: float32
+    tts.attention_implementation: sdpa
+    tts.python_executable: ''
+    tts.worker_start_timeout_sec: 120.0
+    tts.request_timeout_sec: 60.0
+    tts.reference_audio: ''
+    tts.reference_text: ''
+    tts.x_vector_only_mode: false
+    tts.cache_dir: ''
+    tts.queue_depth: 4
+    tts.chunk_bytes: 4096
+    tts.timeout_sec: 60.0
+    tts.max_audio_sec: 30.0
+    tts.mock_duration_sec: 0.15

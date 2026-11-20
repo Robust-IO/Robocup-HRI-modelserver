@@ -1,0 +1,22 @@
+# restaurant_order additionally supports explicit schema_version=2 with allowed_values_json.menu.
+# guest_profile/v2 adds interest and nonnegative integer confusion score p;
+# context_json supplies requested_fields and scoring_rules for the single parsing call.
+# Schemas v1: guest_profile, owner_command, placement_instruction, confirmation,
+# ready, restaurant_order, gpsr_command. See the versioned parsing contracts.
+string request_id
+string session_id
+string text
+string schema
+string schema_version
+# JSON objects. Empty means no supplied constraints/context; restaurant_order/v2 requires {"menu":[...]}.
+string allowed_values_json
+string context_json
+string protocol_version
+---
+bool success
+uint16 error_code
+string error_message
+# Schema-specific JSON; see the documented versioned contracts.
+string validated_json
+---
+string stage

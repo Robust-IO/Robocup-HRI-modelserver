@@ -79,14 +79,13 @@ docker run --rm --gpus all --entrypoint python3 robocup-model-server:local \
 
 ## 比赛基站启动（ROS 2 Domain 42）
 
-在 Linux 基站上先按上节启动三个模型。已有模型容器正在提供服务时，直接在本仓库根目录执行：
+基站按上节准备好模型权重和 Docker 环境后，在公开仓库根目录执行一条命令：
 
 ```bash
-./scripts/start_ros.sh
-docker compose -f compose.yaml -f compose.ros.yaml logs -f ros
+git pull --ff-only origin main && ./scripts/start_ros.sh
 ```
 
-首次启动需 Docker Compose 2.17+、BuildKit，以及本机 Git 对比赛主仓库的读取权限。脚本取出与比赛接口匹配的固定源码，构建 Humble 镜像并后台启动 ROS 节点。日志出现 `llm: ready`、`tts: ready`、`asr_wav: ready` 后可按 Ctrl+C 退出日志。再次运行脚本会复用源码及构建缓存。如果基站已有与 Orin 相同版本的比赛源码，可以指定 `ROBOT_AI_SRC=/绝对路径/NankaiRoboCup2026/src/ai ./scripts/start_ros.sh`。
+脚本启动现有模型服务，等待模型健康，构建并启动 Humble 容器，然后检查三个模型节点的汇总就绪状态。出现 `ROS Domain 42 ready` 后即可关闭终端。构建所需的六个 ROS 包随本仓库提供，接口与比赛源码 `4456355` 对齐。基站无需私有 Git 账号，也无需在宿主机安装 ROS。
 
 ROS 容器使用宿主机网络与默认 Fast DDS，按本仓库配置的 ASR_PORT、LLM_PORT、TTS_PORT 访问基站回环地址。Orin 和基站接入允许 DDS 组播、单播互通的局域网。在 Orin 已加载 Humble 和项目 overlay 的容器终端执行：
 

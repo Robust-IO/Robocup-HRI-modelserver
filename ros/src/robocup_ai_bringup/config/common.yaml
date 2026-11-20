@@ -1,0 +1,15 @@
+/**:
+  ros__parameters:
+    robot_namespace: /robot1
+    protocol_version: '1.0'
+    release_id: development
+    git_commit: unknown
+    ai.allow_real_backends: false
+    half_duplex: true
+    qos.microphone.depth: 5
+    qos.microphone.reliability: best_effort
+    qos.tts_audio.depth: 32
+    qos.tts_audio.reliability: reliable
+    qos.status.depth: 20
+    qos.status.reliability: reliable
+    qos.status.transient_local: true

@@ -1,0 +1,32 @@
+/**:
+  ros__parameters:
+    asr.backend: mock
+    asr.base_url: ''
+    asr.http_model: qwen3-asr
+    asr.model_path: ''
+    asr.python_executable: ''
+    asr.runtime: vllm
+    asr.sample_rate: 16000
+    asr.device: cuda:0
+    asr.dtype: bfloat16
+    asr.attention_implementation: sdpa
+    asr.cuda_visible_devices: '0'
+    asr.gpu_memory_utilization: 0.45
+    asr.max_inference_batch_size: 1
+    asr.max_new_tokens: 512
+    asr.max_model_len: 4096
+    asr.max_num_seqs: 1
+    asr.enforce_eager: true
+    asr.stream_chunk_sec: 2.0
+    asr.unfixed_chunk_num: 2
+    asr.unfixed_token_num: 5
+    asr.worker_start_timeout_sec: 180.0
+    asr.request_timeout_sec: 60.0
+    # Includes capture plus a bounded cold worker restart after cancel/timeout.
+    asr.action_timeout_sec: 260.0
+    asr.mock_text: '你好，请介绍比赛任务'
+    asr.mock_endpoint_sec: 0.2
+    asr.max_duration_sec: 15.0
+    asr.frame_queue_depth: 100
+    asr.vad_threshold: 200
+    asr.silence_sec: 0.5
