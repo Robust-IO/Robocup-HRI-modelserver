@@ -85,6 +85,8 @@ class LlmNode(AiNode):
             if isinstance(self.backend, (OllamaBackend, HttpLlmBackend)):
                 ready, message = self.backend.health()
                 self.set_status('ready' if ready else 'degraded', ready, message)
+                if ready and isinstance(self.backend, HttpLlmBackend):
+                    return
             self.stopping.wait(2.0)
 
     @contextmanager

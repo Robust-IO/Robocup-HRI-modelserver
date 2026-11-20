@@ -60,6 +60,8 @@ class TtsNode(AiNode):
                 while not self.stopping.is_set():
                     ready = self.backend.client.models(self.backend.model)
                     self.set_status('ready' if ready else 'degraded', ready, 'HTTP TTS ready' if ready else 'HTTP TTS unavailable')
+                    if ready:
+                        return
                     self.stopping.wait(2.0)
             else:
                 self.set_status('ready', True, 'TTS backend ready: ' + self.backend_name)

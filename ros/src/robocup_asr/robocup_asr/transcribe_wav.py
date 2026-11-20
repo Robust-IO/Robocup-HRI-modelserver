@@ -31,6 +31,8 @@ class TranscribeWavNode(AiNode):
             ready = self.backend.client.models(self.model)
             self.set_status('ready' if ready else 'degraded', ready,
                             'HTTP ASR ready' if ready else 'HTTP ASR unavailable')
+            if ready:
+                return
             self.stopping.wait(2.0)
 
     def transcribe(self, handle, op):
